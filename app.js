@@ -1,4 +1,4 @@
-﻿const STORAGE_KEY = "edge-start-page-customizations-v1";
+const STORAGE_KEY = "edge-start-page-customizations-v1";
 const EDITOR_SESSION_KEY = "edge-start-page-editor-password";
 const SNAPSHOT_DB_NAME = "edge-start-page-db";
 const SNAPSHOT_STORE_NAME = "snapshots";
@@ -259,9 +259,7 @@ function isFolderRemoved(pathKey, removedFolderSet) {
 
 function saveCustomizations() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.customizations));
-  if (isEditorUnlocked()) {
-    schedulePersistCurrentState();
-  }
+  schedulePersistCurrentState();
 }
 
 function createSnapshotPayload() {
@@ -342,7 +340,9 @@ function applyCustomizationsState(nextCustomizations) {
 async function persistCurrentState() {
   const snapshot = createSnapshotPayload();
   await writePersistedSnapshot(snapshot).catch(() => null);
-  await saveRemoteSnapshot(snapshot).catch(() => null);
+  if (isEditorUnlocked()) {
+    await saveRemoteSnapshot(snapshot).catch(() => null);
+  }
 }
 
 function schedulePersistCurrentState() {
@@ -669,6 +669,9 @@ function parseBookmarkDocument(html) {
     throw new Error("没有找到书签结构，请确认导入的是 Edge 导出的 HTML 文件。");
   }
 
+  const getDirectChildByTag = (element, tagName) =>
+    Array.from(element.children).find((child) => child.tagName?.toLowerCase() === tagName) || null;
+
   const walkDl = (dl, fallbackName = "收藏夹栏") => {
     const folder = { name: fallbackName, children: [], bookmarks: [] };
     let currentFolderName = null;
@@ -676,10 +679,15 @@ function parseBookmarkDocument(html) {
     Array.from(dl.children).forEach((child) => {
       const tag = child.tagName?.toLowerCase();
       if (tag === "dt") {
-        const heading = child.querySelector("h3");
-        const anchor = child.querySelector("a");
+        const heading = getDirectChildByTag(child, "h3");
+        const anchor = getDirectChildByTag(child, "a");
+        const nestedDl = getDirectChildByTag(child, "dl");
         if (heading) {
           currentFolderName = sanitizeText(heading.textContent, "未命名分组");
+          if (nestedDl) {
+            folder.children.push(walkDl(nestedDl, currentFolderName));
+            currentFolderName = null;
+          }
         } else if (anchor) {
           const href = anchor.getAttribute("href");
           if (href) {
@@ -689,6 +697,10 @@ function parseBookmarkDocument(html) {
               domain: getHostname(href),
             });
           }
+          currentFolderName = null;
+        } else if (nestedDl) {
+          folder.children.push(walkDl(nestedDl, currentFolderName || "未命名分组"));
+          currentFolderName = null;
         }
       }
 
@@ -1859,9 +1871,6 @@ elements.searchInput.addEventListener("input", (event) => {
 
 elements.bookmarkForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  if (!ensureEditorAccess("请先解锁编辑模式，再新增书签。")) {
-    return;
-  }
   addCustomBookmark(elements.bookmarkTitle.value, elements.bookmarkUrlInput.value, elements.folderSelect.value);
   elements.bookmarkForm.reset();
 });
