@@ -369,12 +369,6 @@ body[data-editor-mode="locked"] .editor-only {
   display: none !important;
 }
 
-body[data-editor-mode="locked"] .editor-panel .bookmark-form,
-body[data-editor-mode="locked"] .editor-panel .helper-text {
-  opacity: 0.42;
-  pointer-events: none;
-}
-
 .stat-card,
 .overview-card,
 .quick-link-item,
