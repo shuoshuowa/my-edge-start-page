@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Edge Start Page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css?v=20260526-20" />
+  </head>
+  <body data-editor-mode="locked">
+    <div class="editor-access-group">
+      <button
+        id="editor-password-access"
+        class="editor-access-button editor-access-secondary"
+        type="button"
+        hidden
+      >
+        修改口令
+      </button>
+      <button id="editor-access" class="editor-access-button" type="button" aria-haspopup="dialog">
+        编辑模式
+      </button>
+    </div>
+
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy panel panel-hero">
+          <div class="hero-main">
+            <p class="eyebrow">Personal Bookmark Home</p>
+            <h1>把 Edge 书签变成一个真正顺手的主页</h1>
+            <p class="hero-text">
+              自动读取 Edge 书签，整理成一个可搜索、可预览、可维护、带站点状态感知的可视化导航站。
+            </p>
+
+            <div class="hero-actions">
+              <button id="auto-import" class="primary-button" type="button">自动导入 Edge 书签</button>
+              <button id="export-bookmarks" class="secondary-button" type="button">导出书签 HTML</button>
+              <label class="secondary-button" for="bookmark-file">手动导入文件</label>
+              <input id="bookmark-file" type="file" accept=".html,.htm,.json" />
+            </div>
+
+            <p id="auto-path" class="helper-text">
+              默认会尝试读取当前 Windows 用户目录下的 Edge `Bookmarks` 文件。
+            </p>
+
+            <div id="hero-tags" class="hero-tags"></div>
+          </div>
+
+          <div class="hero-float">
+            <div class="panel-title-row hero-float-header">
+              <h2>常用浮动条</h2>
+              <span id="float-count" class="panel-count">0</span>
+            </div>
+            <div id="float-ribbon" class="float-ribbon">
+              <p class="empty-note">多点击几次常用网站，这里会生成漂浮快捷入口。</p>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-aside">
+          <div class="panel stats-panel">
+            <div class="stat-card">
+              <span class="stat-label">分组数量</span>
+              <strong id="folder-count">0</strong>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">书签总数</span>
+              <strong id="bookmark-count">0</strong>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">当前状态</span>
+              <strong id="status-text">等待自动导入</strong>
+            </div>
+          </div>
+
+          <div class="panel spotlight-panel">
+            <div class="panel-title-row">
+              <h2>快捷区</h2>
+              <span id="spotlight-count" class="panel-count">0</span>
+            </div>
+            <div id="spotlight-list" class="spotlight-list">
+              <p class="empty-note">导入完成后，这里会显示你的常用站点和 AI 快速入口。</p>
+            </div>
+          </div>
+        </aside>
+      </header>
+
+      <section class="dashboard">
+        <div class="panel overview-panel">
+          <div class="panel-title-row">
+            <h2>概览面板</h2>
+            <span id="overview-label" class="panel-count">未加载</span>
+          </div>
+          <div class="overview-grid">
+            <div class="overview-card">
+              <span>热门域名</span>
+              <strong id="top-domain">-</strong>
+            </div>
+            <div class="overview-card">
+              <span>最大分组</span>
+              <strong id="largest-folder">-</strong>
+            </div>
+            <div class="overview-card overview-card-source">
+              <span>当前来源</span>
+              <strong id="source-label">示例数据</strong>
+              <div class="network-panel">
+                <div class="network-heading">
+                  <span>网络状态</span>
+                  <strong id="network-score">等待检测</strong>
+                </div>
+                <svg
+                  id="network-chart"
+                  class="network-chart"
+                  viewBox="0 0 240 92"
+                  role="img"
+                  aria-label="网络状态曲线"
+                >
+                  <path class="network-grid-line" d="M8 24 H232" />
+                  <path class="network-grid-line" d="M8 50 H232" />
+                  <path class="network-grid-line" d="M8 76 H232" />
+                  <path id="network-curve" class="network-curve" d="M8 72 C48 52, 78 58, 112 40 S184 34, 232 28" />
+                </svg>
+                <div class="network-legend">
+                  <span><i class="legend-dot is-online"></i><b id="network-online">0</b> 可访问</span>
+                  <span><i class="legend-dot is-warning"></i><b id="network-warning">0</b> 异常</span>
+                  <span><i class="legend-dot is-offline"></i><b id="network-offline">0</b> 失效</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel search-panel">
+          <label class="field-label" for="search-input">全局搜索</label>
+          <input
+            id="search-input"
+            class="search-input"
+            type="search"
+            placeholder="搜索标题、网址、域名"
+          />
+        </div>
+      </section>
+
+      <main class="content-grid">
+        <aside class="sidebar">
+          <div class="panel action-panel editor-panel">
+            <div class="panel-title-row">
+              <h2>维护书签</h2>
+              <span class="panel-count">本地</span>
+            </div>
+            <p class="editor-panel-note">进入编辑模式后，可以新增、调整和删除书签。</p>
+            <form id="bookmark-form" class="bookmark-form">
+              <label>
+                <span class="field-label">标题</span>
+                <input id="bookmark-title" class="search-input" type="text" required />
+              </label>
+              <label>
+                <span class="field-label">网址</span>
+                <input
+                  id="bookmark-url-input"
+                  class="search-input"
+                  type="url"
+                  placeholder="https://example.com"
+                  required
+                />
+              </label>
+              <label>
+                <span class="field-label">加入分组</span>
+                <select id="folder-select" class="search-input"></select>
+              </label>
+              <button class="primary-button action-submit" type="submit">新增到主页</button>
+            </form>
+            <p class="helper-text">
+              部署到 Netlify 后，编辑结果会自动保存到云端状态；本地调试时会写入当前项目目录。
+            </p>
+          </div>
+
+          <div class="panel nav-panel">
+            <div class="panel-title-row">
+              <h2>分组导航</h2>
+              <span id="nav-count" class="panel-count">0</span>
+            </div>
+            <nav id="folder-nav" class="folder-nav">
+              <p class="empty-note">导入完成后，这里会生成可跳转的目录和预览。</p>
+            </nav>
+          </div>
+        </aside>
+
+        <section class="visualization">
+          <div class="panel panel-wide">
+            <div class="panel-title-row panel-title-toolbar">
+              <h2>书签画布</h2>
+              <div class="toolbar-actions">
+                <button id="size-toggle" class="secondary-button secondary-button-small" type="button">
+                  切换紧凑卡片
+                </button>
+                <span id="result-summary" class="panel-count">等待内容</span>
+              </div>
+            </div>
+            <div id="bookmark-root" class="bookmark-root">
+              <div class="empty-state">
+                <h3>你的导航站正在等书签进场</h3>
+                <p>点击“自动导入 Edge 书签”，或者手动导入 Edge 导出的 HTML / Bookmarks 文件。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="editor-auth-dialog" class="editor-dialog">
+      <form id="editor-auth-form" class="editor-form" method="dialog">
+        <div class="editor-header">
+          <div>
+            <p class="editor-eyebrow">编辑权限</p>
+            <h3>输入口令进入编辑模式</h3>
+          </div>
+          <button id="editor-auth-cancel-top" class="icon-button editor-close" type="button">关闭</button>
+        </div>
+
+        <label>
+          <span class="field-label">编辑口令</span>
+          <input id="editor-auth-password" class="search-input" type="password" autocomplete="current-password" required />
+        </label>
+
+        <p id="editor-auth-message" class="helper-text">本次会话只需输入一次，之后可以连续编辑。</p>
+
+        <div class="dialog-support-row">
+          <button id="editor-reset-trigger" class="text-button" type="button">忘记口令？用安全密码重设</button>
+        </div>
+
+        <div class="editor-actions">
+          <button id="editor-auth-cancel" class="secondary-button" type="button">取消</button>
+          <button class="primary-button" type="submit">解锁编辑</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="editor-password-dialog" class="editor-dialog">
+      <form id="editor-password-form" class="editor-form" method="dialog">
+        <div class="editor-header">
+          <div>
+            <p class="editor-eyebrow">口令管理</p>
+            <h3 id="editor-password-title">修改编辑口令</h3>
+          </div>
+          <button id="editor-password-cancel-top" class="icon-button editor-close" type="button">关闭</button>
+        </div>
+
+        <p id="editor-password-note" class="helper-text">
+          当前会话已经解锁，保存后会立即切换到新口令。
+        </p>
+
+        <label id="editor-password-recovery-row">
+          <span class="field-label">安全密码</span>
+          <input
+            id="editor-password-recovery"
+            class="search-input"
+            type="password"
+            autocomplete="one-time-code"
+            placeholder="输入安全密码后重设"
+          />
+        </label>
+
+        <label>
+          <span class="field-label">新口令</span>
+          <input id="editor-password-next" class="search-input" type="password" autocomplete="new-password" required />
+        </label>
+
+        <label>
+          <span class="field-label">确认新口令</span>
+          <input
+            id="editor-password-confirm"
+            class="search-input"
+            type="password"
+            autocomplete="new-password"
+            required
+          />
+        </label>
+
+        <p id="editor-password-message" class="helper-text">建议使用你自己容易记住、但别人难猜到的新口令。</p>
+
+        <div class="editor-actions">
+          <button id="editor-password-cancel" class="secondary-button" type="button">取消</button>
+          <button class="primary-button" type="submit">保存新口令</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="bookmark-editor" class="editor-dialog">
+      <form id="bookmark-editor-form" class="editor-form" method="dialog">
+        <div class="editor-header">
+          <div>
+            <p class="editor-eyebrow">编辑卡片</p>
+            <h3 id="editor-title">修改书签</h3>
+          </div>
+          <button id="editor-cancel-top" class="icon-button editor-close" type="button">关闭</button>
+        </div>
+
+        <label>
+          <span class="field-label">标题</span>
+          <input id="editor-bookmark-title" class="search-input" type="text" required />
+        </label>
+        <label>
+          <span class="field-label">网址</span>
+          <input id="editor-bookmark-url" class="search-input" type="url" required />
+        </label>
+        <label>
+          <span class="field-label">移动到分组</span>
+          <select id="editor-folder-select" class="search-input"></select>
+        </label>
+
+        <div class="editor-actions">
+          <button id="editor-cancel" class="secondary-button" type="button">取消</button>
+          <button class="primary-button" type="submit">保存修改</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="folder-template">
+      <section class="folder-section">
+        <div class="folder-header">
+          <div>
+            <p class="folder-path"></p>
+            <h3 class="folder-title"></h3>
+          </div>
+          <span class="folder-size"></span>
+        </div>
+        <div class="bookmark-grid"></div>
+      </section>
+    </template>
+
+    <template id="bookmark-template">
+      <article class="bookmark-card">
+        <div class="bookmark-card-top">
+          <div class="bookmark-brand">
+            <div class="bookmark-icon">
+              <img class="bookmark-favicon" alt="" loading="lazy" />
+              <span class="bookmark-fallback"></span>
+            </div>
+            <div class="bookmark-top-copy">
+              <span class="bookmark-domain"></span>
+            </div>
+          </div>
+          <div class="bookmark-actions editor-only">
+            <button class="icon-button edit-button" type="button" title="编辑">✎</button>
+            <button class="icon-button pin-button" type="button" title="收藏">☆</button>
+            <button class="icon-button delete-button" type="button" title="删除" aria-label="删除">
+              <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                <path d="M9 4h6l1 2H8l1-2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="bookmark-body">
+          <h4 class="bookmark-title"></h4>
+          <p class="bookmark-url"></p>
+        </div>
+        <div class="bookmark-footer">
+          <div class="bookmark-status-row">
+            <span class="status-pill status-region"></span>
+            <span class="status-pill status-availability"></span>
+          </div>
+          <span class="bookmark-rank"></span>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js?v=20260526-20"></script>
+  </body>
+</html>

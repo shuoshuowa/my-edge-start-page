@@ -1,0 +1,5 @@
+node_modules/
+.state/
+.netlify/
+cloudflare-pages-package-*/
+edge-bookmark-cloudflare-pages.zip

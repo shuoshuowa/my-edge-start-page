@@ -1,0 +1,12 @@
+{
+  "name": "my-edge-start-page",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "netlify:dev": "netlify dev"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.7.8"
+  }
+}
