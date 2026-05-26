@@ -22,7 +22,11 @@ function normalizePassword(value) {
 }
 
 async function getEditorConfig() {
-  const store = getStore(STORE_NAME);
+  const store = getStore({
+  name: STORE_NAME,
+  siteID: process.env.NETLIFY_SITE_ID,
+  token: process.env.NETLIFY_AUTH_TOKEN,
+});
   const config = await store.get(EDITOR_CONFIG_KEY, { type: "json" });
   const editorPassword = normalizePassword(config?.editorPassword) || DEFAULT_EDITOR_PASSWORD;
   return {
@@ -40,7 +44,11 @@ async function setEditorPassword(nextPassword) {
     throw new Error("新口令至少需要 3 个字符。");
   }
 
-  const store = getStore(STORE_NAME);
+  const store = getStore({
+  name: STORE_NAME,
+  siteID: process.env.NETLIFY_SITE_ID,
+  token: process.env.NETLIFY_AUTH_TOKEN,
+});
   const payload = {
     editorPassword: normalizedPassword,
     updatedAt: Date.now(),
