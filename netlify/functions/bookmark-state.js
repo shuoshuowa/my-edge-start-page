@@ -2,8 +2,11 @@ const { getStore } = require("@netlify/blobs");
 const { STORE_NAME, SNAPSHOT_KEY, json, authorizeEditor, normalizeSnapshot } = require("./lib/shared");
 
 exports.handler = async (event) => {
-  const store = getStore(STORE_NAME);
-
+  const store = getStore({
+  name: STORE_NAME,
+  siteID: process.env.NETLIFY_SITE_ID,
+  token: process.env.NETLIFY_AUTH_TOKEN,
+});
   if (event.httpMethod === "GET") {
     const snapshot = await store.get(SNAPSHOT_KEY, { type: "json" });
     return snapshot ? json(200, snapshot) : json(404, { error: "没有找到已保存的书签状态。" });
