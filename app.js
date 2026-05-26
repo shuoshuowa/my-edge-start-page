@@ -275,6 +275,10 @@ function getRemoteSnapshotEndpoint() {
   return isLocalApiAvailable() ? "/api/bookmark-state" : "/.netlify/functions/bookmark-state";
 }
 
+function getStatusEndpoint() {
+  return isLocalApiAvailable() ? "/api/status" : "/.netlify/functions/status";
+}
+
 async function fetchRemoteSnapshot() {
   const response = await fetch(getRemoteSnapshotEndpoint(), {
     method: "GET",
@@ -1476,7 +1480,7 @@ async function autoImportBookmarks() {
 }
 
 async function checkStatusBatch(urls) {
-  const response = await fetch("/api/status", {
+  const response = await fetch(getStatusEndpoint(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ urls }),
@@ -1488,14 +1492,10 @@ async function checkStatusBatch(urls) {
 }
 
 async function queueStatusChecks(urls) {
-  if (!isLocalApiAvailable()) {
-    renderNetworkChart();
-    return;
-  }
-
   const uniqueUrls = [...new Set(urls)].filter(Boolean);
   const pending = uniqueUrls.filter((bookmarkUrl) => !state.statusMap.has(bookmarkUrl));
   if (!pending.length) {
+    renderNetworkChart();
     return;
   }
 
